@@ -1,0 +1,169 @@
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+working-with-docker
+===================
+
+<!-- badges: start -->
+<!-- badges: end -->
+Table of Content
+================
+
+-   [Motiation](#motiation)
+-   [Before We Start](#before-we-start)
+    -   [Examples](#examples)
+        -   [Creating a Docker Image](#creating-a-docker-image)
+            -   [R Workflow](#r-workflow)
+-   [Docker Commands](#docker-commands)
+-   [Resources](#resources)
+
+Motiation
+=========
+
+reproducibility etc etc
+
+Several publications now comes with dockerfiles to replicate their research. The [SWAG](http://rowanzellers.com/swag/) dataset
+
+![](https://i.imgur.com/zgZc6wg.png)
+
+![](https://i.imgur.com/LrStV6u.png)
+
+Before We Start
+===============
+
+We will be learning how to use [Docker](https://www.docker.com/) with [R](https://www.r-project.org/) to promote reproducibility. First you would need to [install docker](https://docs.docker.com/install/) and [install R](https://cran.r-project.org/).
+
+In the next sections we will look a some of the use cases
+
+Examples
+========
+
+Creating a Docker Image
+-----------------------
+
+### R Workflow
+
+Start by creating folder for analysis.
+
+``` r
+library(fs)
+getwd()
+dir_create("01-example")
+file_create("01-example/Dockerfile")
+```
+
+Inside this folder we will put the script we will run. Here it will be called `script.R` and include the following code
+
+``` r
+# Transform data to right shape/format
+iris_metrix <- as.matrix(iris[-5])
+
+# Run model
+kmeans_iris <- kmeans(iris_metrix, centers = 3)
+
+# Extract information
+cluster_centers <- as.data.frame(kmeans_iris$centers)
+cluster_class <- kmeans_iris$cluster
+
+# Same results
+library(readr)
+write_csv(cluster_centers, "iris-centers.csv")
+```
+
+It takes some data, works on it, and output to a file.
+
+Check current version of R we are on.
+
+``` r
+R.Version()$version.string
+```
+
+From this we will get a docker image from rocker with the same version of R. Populate your Dockerfile with
+
+``` dockerfile
+FROM rocker/r-ver:3.5.1
+```
+
+which will download an image with version 3.5.1 R already installed. We also need to install the various R packages used in our script. to find the versions installed for you run the following line of code in R.
+
+``` r
+sessioninfo::package_info(pkgs = c("readr", "tibble"), dependencies = FALSE)
+```
+
+Notice how we can pass multiple packages names in the pkgs argument. We will load readr in as version 1.3.0 and tibble as version 1.4.2 (as 2.0.0 is quite yet avaliable). In your docker file add the follow code
+
+``` dockerfile
+ RUN R -e "install.packages('remotes'); \
+   remotes::install_version('readr', '1.3.0') \
+   remotes::install_version('tibble', '2.0.0')"
+```
+
+Next we will create a folder inside the docker container where the anaylsis will take place, this is done by including
+
+``` dockerfile
+RUN mkdir /home/analysis
+```
+
+To move the script into the docker image we include
+
+``` dockerfile
+COPY script.R /home/analysis/script.R
+```
+
+Lastly we will ask docker to run the script, and move the result to a results folder.
+
+``` dockerfile
+CMD cd /home/analysis \
+  && R -e "source('script.R')" \
+  && mv /home/analysis/iris-centers.csv /home/results/iris-centers.csv
+```
+
+Now the dockerfile is complete and we can build the docker image, this is done by typing in the following commant into the terminal. We have named the image analysis.
+
+``` bash
+# setting the right working directory
+cd ~/Github/working-with-docker/01-example
+# Build docker image
+docker build -t analysis .
+```
+
+Access information from image
+
+``` bash
+# Access results form image
+docker run -v ~/Github/working-with-docker/01-example:/home/results  analysis
+```
+
+Docker Commands
+===============
+
+``` bash
+docker pull [user/repo] # Get image from a repository
+docker build [directory] -t [tag] # Make an image from a Docker file and give it a tag/name
+docker run [image] -p [ports] -v [volumes] [command] -d # Start a container from an image opening a set of ports linking a set volumes run a non-default command, detach
+docker stop [container] # Stop a running container
+```
+
+Resources
+=========
+
+**An Introduction to Docker for R Users**
+<https://colinfay.me/docker-r-reproducibility/>
+
+**A collection of Docker images for R**
+<https://hub.docker.com/u/rocker>
+
+**Rocker project**
+<https://www.rocker-project.org/>
+
+**Introduction to Rocker**
+<https://journal.r-project.org/archive/2017/RJ-2017-065/index.html>
+
+**ROpenSci Docker Tutorial**
+<https://ropenscilabs.github.io/r-docker-tutorial/>
+
+**How To Remove Docker Containers, Images, Volumes, and Networks**
+<https://linuxize.com/post/how-to-remove-docker-images-containers-volumes-and-networks/>
+
+**Docker for the UseR** <https://github.com/noamross/nyhackr-docker-talk>
+
+**Reproducibility of computational workflows is automated using continuous analysis** <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6103790/>
