@@ -23,7 +23,6 @@ knitr::opts_chunk$set(
 - [Before We Start](#before-we-start)
     - [Examples](#examples)
         - [Creating a Docker Image](#creating-a-docker-image)
-            - [R Workflow](#r-workflow)
 - [Docker Commands](#docker-commands)
 - [Resources](#resources)
 
@@ -31,7 +30,7 @@ knitr::opts_chunk$set(
 
 reproducibility etc etc
 
-Several publications now comes with dockerfiles to replicate their research. The [SWAG](http://rowanzellers.com/swag/) dataset 
+Several publications now comes with dockerfiles to replicate their research. The [SWAG](http://rowanzellers.com/swag/) data set is one example.
 
 ![](https://i.imgur.com/zgZc6wg.png)
 
@@ -46,8 +45,6 @@ In the next sections we will look a some of the use cases
 # Examples
 
 ## Creating a Docker Image
-
-### R Workflow
 
 Start by creating folder for analysis. 
 
@@ -96,7 +93,7 @@ which will download an image with version 3.5.1 R already installed. We also nee
 sessioninfo::package_info(pkgs = c("readr", "tibble"), dependencies = FALSE)
 ```
 
-Notice how we can pass multiple packages names in the pkgs argument. We will load readr in as version 1.3.0 and tibble as version 1.4.2 (as 2.0.0 is quite yet avaliable). In your docker file add the follow code
+Notice how we can pass multiple packages names in the pkgs argument. We will load readr in as version 1.3.0 and tibble as version 1.4.2 (as 2.0.0 is quite yet available). In your docker file add the follow code
 
 ```{dockerfile}
  RUN R -e "install.packages('remotes'); \
@@ -104,7 +101,7 @@ Notice how we can pass multiple packages names in the pkgs argument. We will loa
    remotes::install_version('tibble', '2.0.0')"
 ```
 
-Next we will create a folder inside the docker container where the anaylsis will take place, this is done by including
+Next we will create a folder inside the docker container where the analysis will take place, this is done by including
 
 ```{dockerfile}
 RUN mkdir /home/analysis
@@ -124,7 +121,7 @@ CMD cd /home/analysis \
   && mv /home/analysis/iris-centers.csv /home/results/iris-centers.csv
 ```
 
-Now the dockerfile is complete and we can build the docker image, this is done by typing in the following commant into the terminal. We have named the image analysis. 
+Now the dockerfile is complete and we can build the docker image, this is done by typing in the following command into the terminal. We have named the image analysis. 
 
 ```{bash, eval = FALSE}
 # setting the right working directory
