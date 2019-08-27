@@ -90,8 +90,8 @@ Notice how we can pass multiple packages names in the pkgs argument. We will loa
 
 ``` dockerfile
  RUN R -e "install.packages('remotes'); \
-   remotes::install_version('readr', '1.3.0') \
-   remotes::install_version('tibble', '2.0.0')"
+   remotes::install_version('readr', '1.3.0'); \
+   remotes::install_version('tibble', '2.0.0');"
 ```
 
 Next we will create a folder inside the docker container where the analysis will take place, this is done by including
